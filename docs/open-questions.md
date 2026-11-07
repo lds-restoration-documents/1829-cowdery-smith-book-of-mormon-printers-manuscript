@@ -1,0 +1,14 @@
+# Open questions and next steps (as of the end of the POC)
+- Map page number (manifest index) -> folio. In the POC, pages 1-4 = title, blank, preface, blank; 5 = chapter-summary leaf; folio 1 at page 6 (image `_002`). **POC PDF page n = manifest index n** (image heights match for pages 1-20), so `docs/poc-data/` page numbers and the JSP map (`--map 9:4,10:5,17:12,18:13,20:15`) apply unchanged. The JSP PDF has `[p. N]` markers, front matter unnumbered.
+- Decision: keep source images in colour (ink colour separates the scribe, the 1837 emendations and the pencil marks; grayscale saves no image tokens). Untested whether grayscale hurts accuracy.
+- Run a 5-page trial with the real `@L` markup, then `check_structure.py` / `check_spelling.py` / `compile.py`; tune the convention if awkward.
+- Decide: how to handle the 1830 pencil punctuation (currently: not transcribed, noted in the page comment) and whether `@L` marks need a sub-tag (1830 vs 1837).
+- Which pages get a blind second read: top `page_signals.py` scores plus ~10% random; human decides disagreements. A line-crop review checklist (like the 1840 `make_review_checklist.py`) was offered and declined for now.
+- Record hands per page (Cowdery / scribe 2 / Hyrum) as `<!-- hand: -->` when evident; JSP identifies scribes per page.
+- Extend `scribe-forms.tsv` as pages are verified (post-check catches about 60% of spelling errors; about half of flags are false alarms).
+- Check JSP reuse terms before publishing anything derived from the JSP transcript (the repo currently uses it only for scoring).
+- Cost: about 45k tokens per page (Opus or Sonnet; reading the 5 bands dominates); 466 pages is roughly 21M tokens before any second reads. Untested savings: Batch API, prompt caching, trimming band overlap/margins, two pages per agent.
+- Not yet tested: 4 bands instead of 5; Fable model; lower reasoning effort; an Opus second blind read vs a Sonnet one.
+- Ink-color pass for `@later` (418 marks) and a spot check of `@1837` tags, to be run with the blind second read over all pages: crop each mark, measure stroke darkness/hue against known scribal and `@1837` strikes, reassign only clear cases. Also decide whether the spec needs a label for 'scribe or later' (a bare strike with no replacement cannot be dated by content).
+- Check JSP reuse terms (and the image terms) before publishing the layered output files.
+- README typos ("Cowdrey", "1929") for the owner to fix.

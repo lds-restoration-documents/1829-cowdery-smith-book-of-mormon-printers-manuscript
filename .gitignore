@@ -1,0 +1,5 @@
+work/
+__pycache__/
+.DS_Store
+*.pdf
+source-images/
