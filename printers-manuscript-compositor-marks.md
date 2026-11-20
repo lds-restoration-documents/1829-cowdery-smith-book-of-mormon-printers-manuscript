@@ -9,7 +9,7 @@ source_scan: "https://archiveviewer.org/viewer/joseph-smith-papers/printers-manu
 transcription_method: "AI-assisted transcription from page images (Claude Opus, one fresh agent per page, plus automated structure and spelling checks; line-start hyphens added by a patch and a margin pass); blind second read of pages 5-468 with the differences checked against the images; unsettled readings and folio numbers decided by eye by the owner; no full human proofread"
 status: "Draft, AI-assisted transcription from the page images (2026). Every page from 5 on has had a second blind read, reconciled against the images, and readings and folio numbers that stayed unsettled were checked by eye by the owner; there has been no full human proofread. Words are written as the scribe wrote them, spelling included."
 repository: https://github.com/lds-restoration-documents/1829-cowdery-smith-book-of-mormon-printers-manuscript
-version: "2026-11-20+f6c6b5e+dirty"
+version: "v1.0.0 (2026-11-20, 3373fbc)"
 ---
 
 <!-- page 001 -->
