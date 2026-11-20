@@ -1,0 +1,56 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Low-confidence readings review</title>
+<style>
+body{font:15px system-ui,sans-serif;margin:0;background:#f4f1ea;color:#222}
+header{position:sticky;top:0;background:#2b2a27;color:#fff;padding:8px 16px;display:flex;gap:14px;align-items:center;z-index:5;flex-wrap:wrap}
+header button{padding:5px 10px}
+.card{background:#fff;margin:14px 16px;padding:12px;border-radius:6px;box-shadow:0 1px 3px #0003}
+.card.done{border-left:6px solid #3a8a3a}.card.todo{border-left:6px solid #c88a00}
+.card h2{margin:0 0 6px;font-size:17px}
+.card img{max-width:100%;display:block;border:1px solid #ccc;margin:4px 0}
+.ctx{font:13px ui-monospace,Menlo,monospace;background:#faf7ef;padding:6px 8px;border-radius:4px;margin:4px 0;white-space:pre-wrap;word-break:break-word}
+.ctx .cur{background:#ffe9a8;display:block}.ctx .o{color:#888;display:block}
+.meta{font-size:13px;color:#444;margin:4px 0}
+.opt{display:block;margin:5px 0}
+.opt code{background:#eef;padding:1px 4px;border-radius:3px}
+input[type=text]{font:14px ui-monospace,Menlo,monospace;width:98%}
+textarea{width:98%;height:38px}
+.hint{color:#777;font-size:12px}
+.v{display:inline-block;padding:1px 6px;border-radius:3px;background:#ddd;font-size:12px}
+</style></head><body>
+<header><b>Low-confidence readings</b><span id="prog"></span>
+<button onclick="exportTsv()">Export TSV</button><button onclick="exportJson()">Export JSON</button><button onclick="copyTsv()">Copy TSV</button>
+<label><input type="checkbox" id="onlytodo" onchange="render()"> undecided only</label>
+<select id="vf" onchange="render()"><option value="">all verdicts</option><option>A</option><option>B</option><option>BOTH</option><option>NEITHER</option><option>UNREADABLE</option></select>
+<button onclick="if(confirm('Clear all saved decisions?')){localStorage.removeItem(K);render()}">Clear</button></header>
+<div style="margin:12px 16px;font-size:13px;color:#555">
+Each card is one manuscript line the agents could not settle. The red bar at the left of the image marks the estimated line (it can drift by part of a line; read the neighbouring words in the yellow text to find it). Click an image to open it full size. Pick what the manuscript says: keep the transcript as it is, take one of the agents' readings, or type your own. Write your own reading in plain letters as the scribe wrote them; for a struck word write <code>~~word~~</code>, for an insertion above the line <code>^word^</code>; you need not add @1837 tags (say in the note if the dark ink is a later hand). Use <i>can't tell</i> when the image does not settle it. Decisions save in this browser automatically; export when done and send the file back.</div>
+<div id="cards"></div>
+<script>
+const D=/*DATA*/;const K='lowconfReview2026';
+const S=()=>JSON.parse(localStorage.getItem(K)||'{}');const id=c=>c.page+'_'+c.line;
+function save(i,k,v){const s=S();s[i]=s[i]||{};s[i][k]=v;localStorage.setItem(K,JSON.stringify(s));upd()}
+function isdone(d){return d&&d.kind&&(d.kind!=='own'||(d.text||'').trim())}
+function upd(){const s=S();let n=0;D.forEach(c=>{const ok=isdone(s[id(c)]);if(ok)n++;const el=document.getElementById('c'+id(c));if(el)el.className='card '+(ok?'done':'todo')});document.getElementById('prog').textContent=n+' / '+D.length+' decided'}
+function esc(t){return (t||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function opt(c,d,k,label,extra){return `<label class="opt"><input type="radio" name="k${id(c)}" ${d.kind===k?'checked':''} onchange="save('${id(c)}','kind','${k}');render()"> ${label}${extra||''}</label>`}
+function render(){const s=S(),only=document.getElementById('onlytodo').checked,vf=document.getElementById('vf').value;
+document.getElementById('cards').innerHTML=D.filter(c=>!vf||c.verdict===vf).map(c=>{const d=s[id(c)]||{};if(only&&isdone(d))return'';
+const f=`img/p${String(c.page).padStart(3,'0')}_${String(c.line).padStart(2,'0')}.jpg`;
+return `<div class="card ${isdone(d)?'done':'todo'}" id="c${id(c)}"><h2>Page ${c.page}, text line ${c.line} <span class="v">3rd look: ${c.verdict} (${c.conf})</span></h2>
+<a href="${f}" target="_blank"><img src="${f}"></a>
+<div class="ctx"><span class="o">${esc(c.prev)}</span><span class="cur">${esc(c.curraw)}</span><span class="o">${esc(c.next)}</span></div>
+<div class="meta"><b>Third look:</b> ${esc(c.reading)} &mdash; ${esc(c.note)}<br><b>Earlier check:</b> ${esc(c.s2reading)} (${esc(c.s2verdict)}) &mdash; ${esc(c.s2note)}</div>
+${opt(c,d,'keep','keep the transcript as it is (yellow line)')}
+${opt(c,d,'third','third-look reading: ',`<code>${esc(c.reading)}</code>`)}
+${c.s2reading&&c.s2reading!==c.reading?opt(c,d,'earlier','earlier-check reading: ',`<code>${esc(c.s2reading)}</code>`):''}
+${opt(c,d,'own','my own reading:','')}<input type="text" value="${esc(d.text)}" placeholder="the word(s) as written, e.g. ~~gre~~ ^great^" oninput="save('${id(c)}','text',this.value);save('${id(c)}','kind','own')" onchange="render()">
+${opt(c,d,'cant','can\'t tell / leave with doubt comment')}
+<textarea placeholder="notes (optional)" oninput="save('${id(c)}','note',this.value)">${esc(d.note)}</textarea></div>`}).join('');upd()}
+function rows(){const s=S();return D.map(c=>{const d=s[id(c)]||{};const txt=d.kind==='third'?c.reading:d.kind==='earlier'?c.s2reading:d.kind==='own'?(d.text||''):'';return [c.page,c.line,d.kind||'',txt.replace(/[\t\n]/g,' '),(d.note||'').replace(/[\t\n]/g,' ')]})}
+function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
+function tsv(){return 'page\tline\tchoice\ttext\tnote\n'+rows().map(r=>r.join('\t')).join('\n')+'\n'}
+function exportTsv(){dl('lowconf-decisions.tsv',tsv(),'text/tab-separated-values')}
+function exportJson(){dl('lowconf-decisions.json',JSON.stringify(S(),null,1),'application/json')}
+function copyTsv(){navigator.clipboard.writeText(tsv()).then(()=>alert('Copied'))}
+render();
+</script></body></html>

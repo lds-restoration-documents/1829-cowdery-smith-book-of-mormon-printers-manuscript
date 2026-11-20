@@ -12,10 +12,10 @@ Layers (each one includes the ones before it):
   everything  scribal + @1830 + @1837 + @later applied, all punctuation (legacy 'emended').
   Legacy names: base = first, emended = everything. @later (layer unknown) is never applied except in 'everything'.
 --punct overrides the layer's default punctuation (first/scribal none; compositor/1837/everything all).
---sparse keeps the Book of Mormon proper only (pages 5 to the end of Moroni on page 467), with no page markers, and rejoins words
-broken across lines; txt only. A report of joins goes to stderr.
+--sparse keeps the Book of Mormon text only: the title page text (page 1, down to 'judgment seat of Christ', translated from the plates; the byline and copyright entry are left out) and pages 5 to the end of Moroni on page 467, with no page markers; txt only.
+Words broken across lines are NOT joined (the scribe's line-start hyphens stay); one blank line separates the pages (2026-11-19).
 A bare overwrite tag (word@1837 with no strike/insertion) keeps the visible word in every layer and warns on stderr.
-md keeps `<!-- page NNN -->` markers and hard line breaks; txt has no markers. Lines stay as the scribe wrote them (one per manuscript line)."""
+md keeps `<!-- page NNN -->` markers, puts a blank line between manuscript lines (so Markdown shows one line per paragraph) and a `---` rule between pages; txt has no markers. Lines stay as the scribe wrote them (one per manuscript line)."""
 import argparse, re, sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -27,6 +27,7 @@ APPLIED = {'first': set(), 'scribal': {None}, 'compositor': {None, '1830'}, '183
            'everything': {None, '1830', '1837', 'later'}}
 PUNCT = {'first': 'none', 'scribal': 'none', 'compositor': 'all', '1837': 'all', 'everything': 'all', 'full': 'inline'}
 SPARSE_FIRST, SPARSE_LAST, SPARSE_END_LINE = 5, 467, 'The Testimony of three witnesses'  # page 467 line 23 starts the Three Witnesses
+SPARSE_TITLE, SPARSE_TITLE_END = 1, 'By Joseph Smith Junior'  # page 1: title page text, cut before the byline (2026-11-20)
 TAG = r'(?:@(1837|1830|later))?'
 BARE = r'(\S+)@(?:1837|1830|later)\b'
 try: DICT = {w.strip().lower() for w in open('/usr/share/dict/words')}  # optional guard against joining two real words
@@ -124,22 +125,24 @@ def build(layer='first', fmt='txt', punct=None, sparse=False, pages_dir=PAGES, w
     chunks, flat = [], []
     for f in sorted(Path(pages_dir).glob('page-*.md')):
         n = int(f.stem[-3:])
-        if sparse and not (SPARSE_FIRST <= n <= SPARSE_LAST):
+        if sparse and not (SPARSE_FIRST <= n <= SPARSE_LAST or n == SPARSE_TITLE):
             continue
         lines = render_page(f.read_text(), n, layer, punct, fmt, warn)
+        lines = [re.sub(r'^-\s+(?=\S)', '-', l) for l in lines]  # no space after a line-start hyphen: '- x' would be a Markdown bullet (2026-11-20)
+        if sparse and n == SPARSE_TITLE:
+            lines = lines[:next(i for i, l in enumerate(lines) if l.startswith(SPARSE_TITLE_END))]
         if sparse and n == SPARSE_LAST:
             lines = lines[:next(i for i, l in enumerate(lines) if l.startswith(SPARSE_END_LINE))]
         if sparse:
-            flat += lines
+            flat += ([''] if flat else []) + lines  # blank line between pages
         else:
             chunks.append((n, lines))
     if sparse:
-        return '\n'.join(rejoin(flat, report if report is not None else defaultdict(list))) + '\n'
-    eol = '  ' if fmt == 'md' else ''
+        return '\n'.join(flat) + '\n'
     out = []
     for n, lines in chunks:
-        out.append((f'<!-- page {n:03d} -->\n' if fmt == 'md' else '') + '\n'.join(l + eol for l in lines) + '\n')
-    return '\n'.join(out)
+        out.append((f'<!-- page {n:03d} -->\n' if fmt == 'md' else '') + ('\n\n' if fmt == 'md' else '\n').join(lines) + '\n')
+    return ('\n---\n\n' if fmt == 'md' else '\n').join(out)
 
 
 if __name__ == '__main__':
@@ -151,5 +154,4 @@ if __name__ == '__main__':
     warn = set(); rep = defaultdict(list)
     text = build(a.layer, a.format, a.punct, a.sparse, a.dir, warn, rep)
     for w in sorted(warn): print('warning:', w, file=sys.stderr)
-    if a.sparse: print('joins:', {k: len(v) for k, v in rep.items()}, file=sys.stderr)
     Path(a.out).write_text(text) if a.out else print(text)

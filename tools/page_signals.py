@@ -4,7 +4,8 @@ predicted per-page error well in the POC: correlation ~0.8 on ordinary text page
 Usage: page_signals.py [pages_dir] [--top N]"""
 import re, sys
 from pathlib import Path
-args = [a for a in sys.argv[1:] if not a.startswith('--')]
+_top_i = sys.argv.index('--top') if '--top' in sys.argv else -1
+args = [a for i, a in enumerate(sys.argv[1:], 1) if not a.startswith('--') and i != _top_i + 1]
 top = int(sys.argv[sys.argv.index('--top')+1]) if '--top' in sys.argv else 0
 d = Path(args[0] if args else Path(__file__).resolve().parents[1] / 'book-of-mormon-printers-manuscript-pages')
 rows = []

@@ -1,8 +1,4 @@
-# JSP source note (summary of what matters for this project)
-Source: Joseph Smith Papers, "Printer's Manuscript of the Book of Mormon, [ca. Aug. 1829-ca. Jan. 1830]". Handwriting of Oliver Cowdery, an unknown scribe ("scribe 2"), and Hyrum Smith; 466 pages (two leaves, likely blank, missing); Church History Library (acquired from the RLDS church/Community of Christ in 2017). Includes emendations.
-- Gatherings: six ruled sheets folded into 12 leaves / 24 pages; 21 gatherings plus two loose leaves of introductory material (preface leaf ~22 x 21 cm, cut along the bottom; copyright leaf ~32 x 21 cm). Pages about 32 x 20 cm; most have 37 lines; some machine-ruled, some hand-ruled.
-- Pagination: Cowdery numbered upper right (recto) / upper left (verso); Hyrum Smith and scribe 2 upper left on both. Title/copyright leaf, preface leaf and first leaf unnumbered. Signature marks by Cowdery at the bottom of the first recto of gatherings 2-18.
-- Typesetters used the printer's manuscript up through gathering 15, the original manuscript until gathering 20, then the printer's manuscript to the end. A change in signature-mark style between gatherings 14 and 16 probably reflects the changed copytext.
-- Layers: (1) original inscription; (2) 1830 compositor's marks by John H. Gilbert (pencil, occasionally ink; punctuation, capitals, pilcrows; about 39% of pages); (3) emendations by Joseph Smith for the 1837 edition (he and Cowdery used only the printer's manuscript and the 1830 edition).
-- **The JSP online transcript includes only the original inscriptions, not the later redactions; readers will notice many discrepancies between the images and the transcript.**
-- Images in the JSP edition were taken in 2012.
+# JSP source note
+Source of the page images: Joseph Smith Papers, "Printer's Manuscript of the Book of Mormon, [ca. Aug. 1829-ca. Jan. 1830]" (handwriting of Oliver Cowdery, an unidentified scribe, and Hyrum Smith; Church History Library). See the Joseph Smith Papers website for the edition, its editorial introduction and its terms of use.
+
+This file used to summarize the JSP editorial note (physical description, gatherings, pagination, copytext, layers). That summary was removed on 2026-11-20 as a precaution until the JSP reuse terms have been checked. The layer model used in this repository is described in `README.md` and `tools/transcription-spec.md`, and rests on what the images show.

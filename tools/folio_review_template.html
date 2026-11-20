@@ -1,0 +1,56 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Folio review</title>
+<style>
+body{font:15px system-ui,sans-serif;margin:0;background:#f4f1ea;color:#222}
+header{position:sticky;top:0;background:#2b2a27;color:#fff;padding:8px 16px;display:flex;gap:16px;align-items:center;z-index:5;flex-wrap:wrap}
+header button{padding:5px 10px}
+.card{background:#fff;margin:16px;padding:14px;border-radius:6px;box-shadow:0 1px 3px #0003}
+.card.done{border-left:6px solid #3a8a3a}.card.todo{border-left:6px solid #c88a00}
+.card h2{margin:0 0 6px;font-size:18px}
+.imgs img{max-width:100%;display:block;margin:6px 0;border:1px solid #ccc}
+.row{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.col{flex:1;min-width:380px}
+.meta{font-size:13px;color:#444;background:#faf7ef;padding:6px 8px;border-radius:4px;margin:4px 0}
+.cand button{margin:2px 4px 2px 0;padding:3px 8px}
+input[type=text]{font-size:18px;width:6em}textarea{width:100%;height:46px}
+label{margin-right:12px}
+.hint{color:#777;font-size:12px}
+details summary{cursor:pointer;color:#06c;margin:4px 0}
+</style></head><body>
+<header><b>Folio review</b><span id="prog"></span>
+<button onclick="exportTsv()">Export TSV</button><button onclick="exportJson()">Export JSON</button>
+<button onclick="copyTsv()">Copy TSV</button>
+<label><input type="checkbox" id="onlytodo" onchange="render()"> show undecided only</label>
+<button onclick="if(confirm('Clear all saved decisions?')){localStorage.removeItem(K);render()}">Clear</button></header>
+<div style="margin:12px 16px;font-size:13px;color:#555">For each page: read the folio number (usually upper right; page 250 upper left) from the top strip and corner crops. "Page minus 4" and neighbouring folios are only a sequence hint, not evidence. Choose <i>folio</i> (type the number), <i>none</i> (unnumbered leaf), or <i>unreadable</i>. Decisions save in this browser automatically; export when done and send the file back.</div>
+<div id="cards"></div>
+<script>
+const D=/*DATA*/;const K='folioReview2026';
+const S=()=>JSON.parse(localStorage.getItem(K)||'{}');
+function save(p,k,v){const s=S();s[p]=s[p]||{};s[p][k]=v;localStorage.setItem(K,JSON.stringify(s));upd()}
+function upd(){const s=S();let n=0;D.forEach(c=>{const d=s[c.page]||{};const ok=d.kind==='none'||d.kind==='unreadable'||(d.kind==='folio'&&d.val);if(ok)n++;const el=document.getElementById('c'+c.page);if(el){el.className='card '+(ok?'done':'todo')}});document.getElementById('prog').textContent=n+' / '+D.length+' decided'}
+function esc(t){return (t||'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+function render(){const s=S(),only=document.getElementById('onlytodo').checked;
+document.getElementById('cards').innerHTML=D.map(c=>{const d=s[c.page]||{};
+const ok=d.kind==='none'||d.kind==='unreadable'||(d.kind==='folio'&&d.val);if(only&&ok)return'';
+const cands=[['file',c.file.replace(/<!--\s*folio\s*|-->/g,'').split(/[;(]/)[0].trim()],['blind',c.blind],['close',c.close]].filter(x=>x[1]);
+return `<div class="card ${ok?'done':'todo'}" id="c${c.page}"><h2>Page ${c.page}</h2><div class="row"><div class="col imgs">
+<img src="img/top${String(c.page).padStart(3,'0')}.jpg"><img src="img/tr${String(c.page).padStart(3,'0')}.jpg"><img src="img/tl${String(c.page).padStart(3,'0')}.jpg">
+<details><summary>Full page (reduced)</summary><img src="img/full${String(c.page).padStart(3,'0')}.jpg"></details></div>
+<div class="col"><div class="meta"><b>Earlier readings</b> (may be wrong):<br>file comment: ${esc(c.file)}<br>blind read: ${esc(c.blind)||'-'} (${esc(c.blindc)||'-'}) &nbsp; close read: ${esc(c.close)||'-'} (${esc(c.closec)||'-'})<br>note: ${esc(c.note)||'-'}<br>
+<span class="hint">sequence hint: page minus 4 = ${c.seq}; folio on page ${c.page-1} = ${esc(c.prev)||'?'}, on page ${c.page+1} = ${esc(c.next)||'?'}</span></div>
+<div class="cand">Fill from: ${cands.map(x=>`<button onclick="pick(${c.page},'${esc(x[1])}')">${x[0]} ${esc(x[1])}</button>`).join('')}</div>
+<p><label><input type="radio" name="k${c.page}" ${d.kind==='folio'?'checked':''} onchange="save(${c.page},'kind','folio');render()"> folio</label>
+<input type="text" id="v${c.page}" value="${esc(d.val)}" oninput="save(${c.page},'val',this.value);save(${c.page},'kind','folio')" onchange="render()">
+<label><input type="radio" name="k${c.page}" ${d.kind==='none'?'checked':''} onchange="save(${c.page},'kind','none');render()"> none (unnumbered)</label>
+<label><input type="radio" name="k${c.page}" ${d.kind==='unreadable'?'checked':''} onchange="save(${c.page},'kind','unreadable');render()"> unreadable</label></p>
+<p><label>confidence <select onchange="save(${c.page},'conf',this.value)"><option value="">-</option>${['sure','fairly sure','guess'].map(o=>`<option ${d.conf===o?'selected':''}>${o}</option>`).join('')}</select></label></p>
+<textarea placeholder="notes (optional)" oninput="save(${c.page},'note',this.value)">${esc(d.note)}</textarea></div></div></div>`}).join('');upd()}
+function pick(p,v){save(p,'val',v);save(p,'kind','folio');render()}
+function rows(){const s=S();return D.map(c=>{const d=s[c.page]||{};return [c.page,d.kind||'',d.kind==='folio'?d.val||'':'',d.conf||'',(d.note||'').replace(/[\t\n]/g,' ')]})}
+function dl(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click()}
+function tsv(){return 'page\tkind\tfolio\tconfidence\tnote\n'+rows().map(r=>r.join('\t')).join('\n')+'\n'}
+function exportTsv(){dl('folio-decisions.tsv',tsv(),'text/tab-separated-values')}
+function exportJson(){dl('folio-decisions.json',JSON.stringify(S(),null,1),'application/json')}
+function copyTsv(){navigator.clipboard.writeText(tsv()).then(()=>alert('Copied'))}
+render();
+</script></body></html>
